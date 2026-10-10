@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- The browser chrome colour for the *default* (light) theme, matching App.tsx's `bg-header`
+         (index.css's `--color-header`). The inline script right below corrects it to the dark header
+         colour whenever the resolved theme is dark — a plain `media="(prefers-color-scheme: dark)"`
+         second `<meta>` would only track the OS, not the manual light/dark override below, so this one
+         tag is kept in sync by JS instead (theme.store.ts's `applyResolved` does the same on every
+         later toggle). It has to sit before the script that reads it. -->
+    <meta name="theme-color" content="#fbf8f1" />
+    <script>
+      // Applies the reader's theme before first paint, so the page never flashes the wrong one: the
+      // app bundle (store/theme.store.ts, which this mirrors by hand — it cannot import that module,
+      // since it has to run before the bundle even starts downloading) reads `cb.theme` the same way.
+      // Wrapped in one try/catch: a private window or blocked storage must fall back to `system`
+      // (i.e. do nothing here, since the default `:root` in index.css already is the light theme, and
+      // `prefers-color-scheme` covers a dark system with no explicit choice — see index.css), never throw.
+      (function () {
+        try {
+          var stored = localStorage.getItem('cb.theme');
+          var theme = stored === 'light' || stored === 'dark' ? stored : 'system';
+          var dark = theme === 'system' ? window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches : theme === 'dark';
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', dark ? '#1e1a16' : '#fbf8f1');
+        } catch (e) {
+          /* localStorage/matchMedia unavailable: stay on the light default above */
+        }
+      })();
+      // Declares the language being read on <html lang> before first paint, the way store/content.store.ts
+      // (`readLanguage`, which this mirrors by hand for the same reason) resolves its initial language:
+      // a stored `it` is Italian, and anything else (another value, nothing, blocked storage) is English.
+      // A screen reader and the browser's own language features go by this attribute, so it must not stay
+      // on the markup's `en` for an Italian reader. The attribute is always written, so the result never
+      // depends on what the markup said.
+      (function () {
+        var lang = 'en';
+        try {
+          if (localStorage.getItem('cb.lang') === 'it') lang = 'it';
+        } catch (e) {
+          /* localStorage unavailable: English, as the store reads it */
+        }
+        document.documentElement.setAttribute('lang', lang);
+      })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- The published site is a private group's tool, not a public product: keep it out of search results. -->
+    <meta name="robots" content="noindex" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/multiclass/icons/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/multiclass/icons/apple-touch-icon.png" />
+    <title>Multiclass</title>
+    <script type="module" crossorigin src="/multiclass/assets/index-B4ZNrqVv.js"></script>
+    <link rel="modulepreload" crossorigin href="/multiclass/assets/query-C3tkEIS-.js">
+    <link rel="stylesheet" crossorigin href="/multiclass/assets/index-CFM0M7Ms.css">
+  <link rel="manifest" href="/multiclass/manifest.webmanifest"></head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
